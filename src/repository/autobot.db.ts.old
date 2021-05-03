@@ -1,0 +1,46 @@
+const { Pool } = require('pg');
+const pool = new Pool({
+  user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: 'dsr66rv5vm0b3',
+  password: process.env.DB_PW,
+  port: 5432,
+  ssl: {
+    rejectUnauthorized: false,
+  },
+});
+
+module.exports = {
+  query: (text, params, callback) => {
+    const start = Date.now();
+    return pool.query(text, params, (err, res) => {
+      const duration = Date.now() - start;
+      console.log('executed query', { text, duration, rows: res.rowCount });
+      callback(err, res);
+    });
+  },
+};
+
+// @Injectable()
+// export class AutobotDb {
+//   _pool: Pool;
+
+//   get pool() {
+//     if (!this.pool) {
+//       console.log('initialize pool');
+//       this._pool = new Pool({
+//         user: process.env.DB_USER,
+//         host: process.env.DB_HOST,
+//         database: 'dsr66rv5vm0b3',
+//         password: process.env.DB_PW,
+//         port: 5432,
+//         ssl: {
+//           rejectUnauthorized: false,
+//         },
+//       });
+//     } else {
+//       console.log('pool is initialized');
+//     }
+//     return this._pool;
+//   }
+// }
