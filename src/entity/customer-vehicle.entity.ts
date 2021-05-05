@@ -1,5 +1,8 @@
-export class CustomerVehicleEntity {
+import { BaseEntity } from './base.entity';
+
+export class CustomerVehicleEntity extends BaseEntity {
   constructor(customerVehicleId?: number) {
+    super();
     this.customerVehicleId = customerVehicleId;
   }
 

@@ -8,6 +8,13 @@ import { CustomerRepository } from './repository/customer.repository';
 import { CustomerVehicleController } from './controller/customer-vehicle.controller';
 import { CustomerVehicleService } from './service/customer-vehicle.service';
 import { CustomerVehicleRepository } from './repository/customer-vehicle.repository';
+import { ServiceAppointmentController } from './controller/service-appointment.controller';
+import { ServiceAppointmentService } from './service/service-appointment.service';
+import { ServiceAppointmentRepository } from './repository/service-appointment.repository';
+import { TestController } from './controller/test.controller';
+import { TestService } from './service/test.service';
+import { InteractionsController } from './controller/interactions.controller';
+import { InteractionsService } from './service/interactions.service';
 
 @Module({
   imports: [],
@@ -15,6 +22,9 @@ import { CustomerVehicleRepository } from './repository/customer-vehicle.reposit
     VehicleServiceController,
     CustomerController,
     CustomerVehicleController,
+    ServiceAppointmentController,
+    TestController,
+    InteractionsController,
   ],
   providers: [
     VehicleServiceService,
@@ -23,7 +33,11 @@ import { CustomerVehicleRepository } from './repository/customer-vehicle.reposit
     CustomerRepository,
     CustomerVehicleService,
     CustomerVehicleRepository,
+    ServiceAppointmentService,
+    ServiceAppointmentRepository,
+    TestService,
+    InteractionsService,
   ],
-  exports: [VehicleServiceRepository],
+  exports: [],
 })
 export class AppModule {}
