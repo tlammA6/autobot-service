@@ -76,5 +76,4 @@ export abstract class BaseEntity implements Entity {
   private inferValueType(value: string | number): string {
     return typeof value == 'string' ? `'${value}'` : `${value}`;
   }
-
 }

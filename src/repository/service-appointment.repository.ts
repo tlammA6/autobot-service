@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { Entity } from 'src/entity/entity';
 import { ServiceAppointmentEntity } from '../entity/service-appointment.entity';
 import { BaseRepository } from './base.repository';
 
