@@ -1,7 +1,8 @@
 import { Client } from 'pg';
+import { Field } from './Field';
 
 export abstract class BaseRepository<Type> {
-  abstract createEntity(row: any[]): Type;
+  abstract createEntity(): Type;
 
   async create(entity: Type): Promise<Type> | undefined {
     const query =
@@ -89,12 +90,13 @@ export abstract class BaseRepository<Type> {
   private async queryWithResults(query: string): Promise<Type[]> {
     const client: Client = await this.createClient();
     const entities: Type[] = [];
-
     try {
       const result = await client.query(query);
       const rows = result.rows;
       rows.forEach((row) => {
-        entities.push(this.createEntity(row));
+        entities.push(
+          this.populateEntity(this.createEntity(), result.fields, row),
+        );
       });
     } catch (err) {
       console.error(err.stack);
@@ -103,6 +105,23 @@ export abstract class BaseRepository<Type> {
     }
     console.log('entitycount: ' + entities.length);
     return entities;
+  }
+
+  private populateEntity(entity: Type, fields: Field[], row: any): Type {
+    const props: string[] = [];
+
+    for (const field of fields) {
+      const prop = field.name.replace(/_([a-z])/g, function (g) {
+        return g[1].toUpperCase();
+      });
+
+      entity[prop] = row[field.name];
+      props.push(prop);
+    }
+
+    console.info(`entity: ${Object.entries(entity)}`);
+
+    return entity;
   }
 
   private tableName(entity: Type): string {
@@ -127,7 +146,7 @@ export abstract class BaseRepository<Type> {
     return undefined;
   }
 
-  private tableColumns(entity: Type): string[] {
+  tableColumns(entity: Type): string[] {
     const columns: string[] = [];
 
     for (const [key] of Object.entries(entity)) {

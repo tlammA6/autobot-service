@@ -14,11 +14,13 @@ export class CustomerVehicleService {
     return await this.customerVehicleRepository.create(customerVehicleEntity);
   }
 
-  public async findAll(): Promise<CustomerVehicleEntity[]> {
-    return this.customerVehicleRepository.findAll(new CustomerVehicleEntity());
+  public async findAll(
+    customerVehicleEntity: CustomerVehicleEntity,
+  ): Promise<CustomerVehicleEntity[]> {
+    return this.customerVehicleRepository.findAll(customerVehicleEntity);
   }
 
-  public async find(
+  public async findOne(
     customerVehicleEntity: CustomerVehicleEntity,
   ): Promise<CustomerVehicleEntity> {
     return this.customerVehicleRepository.findOne(customerVehicleEntity);

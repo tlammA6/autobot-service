@@ -4,7 +4,7 @@ import { BaseRepository } from './base.repository';
 
 @Injectable()
 export class CustomerRepository extends BaseRepository<CustomerEntity> {
-  createEntity(row: any): CustomerEntity {
-    return new CustomerEntity(row.customer_id, row.first_name, row.last_name);
+  createEntity(): CustomerEntity {
+    return new CustomerEntity();
   }
 }
