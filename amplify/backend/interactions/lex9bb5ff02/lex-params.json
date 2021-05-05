@@ -1,0 +1,34 @@
+{
+    "resourceName": "lex9bb5ff02",
+    "botName": "autobot",
+    "intents": [
+        {
+            "cancelMessage": "Thanks",
+            "confirmationQuestion": "{firstName}, please wait while we bring up your account...",
+            "slots": [
+                {
+                    "name": "firstName",
+                    "type": "AMAZON.US_FIRST_NAME",
+                    "prompt": "May I please have your first name?",
+                    "required": true,
+                    "customType": false
+                },
+                {
+                    "name": "lastName",
+                    "type": "AMAZON.US_LAST_NAME",
+                    "prompt": "May I please have your last name?",
+                    "required": true,
+                    "customType": false
+                }
+            ],
+            "utterances": [
+                "I would like to schedule service for my car"
+            ],
+            "intentName": "scheduleservice",
+            "newSlotTypes": []
+        }
+    ],
+    "outputVoice": false,
+    "sessionTimeout": 5,
+    "coppa": false
+}

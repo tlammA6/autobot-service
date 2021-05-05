@@ -59,7 +59,8 @@ export class CustomerVehicleController {
   private assign(customerVehicle): CustomerVehicleEntity {
     /**
      * vehicleService param comes through as an Ojbect, thus we need to assign it to type CustomerVehicleEntity
-     * in order for the repository to infer the table and column names.
+     * in order for the repository to infer the table and column names and to be able to dynamically set the entity's
+     * member properties.
      **/
     return Object.assign(new CustomerVehicleEntity(), customerVehicle);
   }

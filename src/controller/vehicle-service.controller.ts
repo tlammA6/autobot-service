@@ -51,14 +51,9 @@ export class VehicleServiceController {
   private assign(vehicleService): VehicleServiceEntity {
     /**
      * vehicleService param comes through as an Ojbect, thus we need to assign it to type VehicleServiceEntity
-     * in order for the repository to infer the table and column names.
+     * in order for the repository to infer the table and column names and to be able to dynamically set the entity's
+     * member properties.
      **/
-    const vehicleServiceEntity: VehicleServiceEntity = Object.assign(
-      new VehicleServiceEntity(),
-      vehicleService,
-    );
-
-    console.log(`entries: ${Object.entries(vehicleServiceEntity)}`);
-    return vehicleServiceEntity;
+    return Object.assign(new VehicleServiceEntity(), vehicleService);
   }
 }

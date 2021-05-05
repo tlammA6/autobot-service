@@ -1,66 +1,57 @@
 import { Client } from 'pg';
-import { Field } from './Field';
+import { Entity } from 'src/entity/entity';
 
 export abstract class BaseRepository<Type> {
-  abstract createEntity(): Type;
+  abstract createType(): Type;
+  abstract convertToEntity(type: Type): Entity;
 
-  async create(entity: Type): Promise<Type> | undefined {
+  async create(entity: Entity): Promise<Type> | undefined {
     const query =
-      `INSERT INTO ${this.tableName(entity)}` +
-      `( ${this.tableColumns(entity).join(',')} )` +
-      ` VALUES( ${this.tableColumnValues(entity).join(',')})` +
-      ` RETURNING ${this.primaryKey(entity)}`;
+      `INSERT INTO ${entity.tableName()}` +
+      `( ${entity.columns().join(',')} )` +
+      ` VALUES( ${entity.columnValues().join(',')})` +
+      ` RETURNING ${entity.primaryKey()}`;
 
-    return await this.findOne((await this.queryWithResults(query))[0]);
+    return await this.findOne(
+      this.convertToEntity((await this.runQuery(query))[0]),
+    );
   }
 
-  async findAll(entity: Type): Promise<Type[]> {
-    const query = `SELECT * FROM ${this.tableName(entity)}`;
-
-    return await this.queryWithResults(query);
+  async findAll(entity: Entity): Promise<Type[]> {
+    return await this.runQuery(`SELECT * FROM ${entity.tableName()}`);
   }
 
-  async findOne(entity: Type): Promise<Type> {
-    this.mustHavePrimaryKeyValue(entity);
-
+  async findOne(entity: Entity): Promise<Type> {
     const query =
       `SELECT * FROM ` +
-      ` ${this.tableName(entity)} ` +
+      ` ${entity.tableName()} ` +
       ` ${this.buildWhereClause(entity)}`;
 
-    return (await this.queryWithResults(query))[0];
+    return (await this.runQuery(query))[0];
   }
 
-  async update(entity: Type): Promise<void> {
-    this.mustHavePrimaryKeyValue(entity);
-
+  async update(entity: Entity): Promise<void> {
     const setValues: string[] = [];
 
-    for (const [key, value] of Object.entries(entity)) {
-      if (this.inferColumnName(key) != this.primaryKey(entity)) {
-        setValues.push(
-          `${this.inferColumnName(key)} = ${this.inferValueType(value)}`,
-        );
-      }
+    for (let i = 0; i < entity.columns().length; i++) {
+      setValues.push(entity.columns()[i] + ' = ' + entity.columnValues()[i]);
     }
 
     const query =
-      `UPDATE ${this.tableName(entity)}  ` +
+      `UPDATE ${entity.tableName()}  ` +
       ` SET ${setValues.join(', ')} ` +
       ` ${this.buildWhereClause} `;
 
-    await this.queryNoReturn(query);
+    await this.runQuery(query);
   }
 
-  async delete(entity: Type): Promise<void> {
-    this.mustHavePrimaryKeyValue(entity);
-
+  async delete(entity: Entity): Promise<void> {
     const query =
       `DELETE FROM ` +
-      ` ${this.tableName(entity)} ` +
+      ` ${entity.tableName()} ` +
       ` ${this.buildWhereClause(entity)}`;
 
-    await this.queryNoReturn(query);
+    await this.runQuery(query);
   }
 
   private async createClient(): Promise<Client> {
@@ -69,17 +60,7 @@ export abstract class BaseRepository<Type> {
     return client;
   }
 
-  private async queryNoReturn(query: string): Promise<void> {
-    console.log(`Query: ${query}`);
-    const client: Client = await this.createClient();
-    await client
-      .query(query)
-      .then((result) => console.log(result))
-      .catch((e) => console.error(e.stack))
-      .then(() => client.end());
-  }
-
-  private async queryWithResults(query: string): Promise<Type[]> {
+  private async runQuery(query: string): Promise<Type[]> {
     console.log(`Query: ${query}`);
 
     const client: Client = await this.createClient();
@@ -89,9 +70,10 @@ export abstract class BaseRepository<Type> {
       .then((result) => {
         const rows = result.rows;
         rows.forEach((row) => {
-          entities.push(
-            this.populateEntity(this.createEntity(), result.fields, row),
-          );
+          const type: Type = this.createType();
+          this.convertToEntity(type).populateEntity(result.fields, row);
+          // entities.push(this.populateEntity(result.fields, row));
+          entities.push(type);
         });
       })
       .catch((e) => console.error(e.stack))
@@ -100,91 +82,7 @@ export abstract class BaseRepository<Type> {
     return entities;
   }
 
-  private populateEntity(entity: Type, fields: Field[], row: any): Type {
-    const props: string[] = [];
-
-    for (const field of fields) {
-      const prop = field.name.replace(/_([a-z])/g, function (g) {
-        return g[1].toUpperCase();
-      });
-
-      entity[prop] = row[field.name];
-      props.push(prop);
-    }
-
-    console.info(`entity: ${Object.entries(entity)}`);
-
-    return entity;
-  }
-
-  private tableName(entity: Type): string {
-    const tableName: string[] = entity.constructor.name.split(/(?=[A-Z])/);
-    tableName.pop();
-    return tableName.join('_').toUpperCase();
-  }
-
-  private primaryKey(entity: Type): string {
-    return this.tableName(entity) + '_ID';
-  }
-
-  private mustHavePrimaryKeyValue(entity: Type): void {
-    if (!this.primaryKeyValue(entity)) {
-      throw new Error(
-        `${entity.constructor.name} missing ${this.primaryKey(entity)}`,
-      );
-    }
-  }
-
-  private primaryKeyValue(entity: Type): any {
-    for (const [key, value] of Object.entries(entity)) {
-      const column = this.inferColumnName(key);
-
-      if (column == this.primaryKey(entity)) {
-        return value;
-      }
-    }
-
-    return undefined;
-  }
-
-  tableColumns(entity: Type): string[] {
-    const columns: string[] = [];
-
-    for (const [key] of Object.entries(entity)) {
-      if (this.inferColumnName(key) != this.primaryKey(entity)) {
-        columns.push(this.inferColumnName(key));
-      }
-    }
-
-    return columns;
-  }
-
-  private tableColumnValues(entity: Type): string[] {
-    const values: string[] = [];
-
-    for (const [key, value] of Object.entries(entity)) {
-      if (this.inferColumnName(key) != this.primaryKey(entity)) {
-        values.push(this.inferValueType(value));
-      }
-    }
-
-    return values;
-  }
-
-  private inferColumnName(key: string): string {
-    return key
-      .split(/(?=[A-Z])/)
-      .join('_')
-      .toUpperCase();
-  }
-
-  private inferValueType(value: string | number): string {
-    return typeof value == 'string' ? `'${value}'` : `${value}`;
-  }
-
-  private buildWhereClause(entity: Type): string {
-    return ` WHERE ${this.primaryKey(entity)} = ${this.primaryKeyValue(
-      entity,
-    )} `;
+  private buildWhereClause(entity: Entity): string {
+    return ` WHERE ${entity.primaryKey()} = ${entity.primaryKeyValue()} `;
   }
 }
