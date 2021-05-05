@@ -13,6 +13,8 @@ import { ServiceAppointmentService } from './service/service-appointment.service
 import { ServiceAppointmentRepository } from './repository/service-appointment.repository';
 import { TestController } from './controller/test.controller';
 import { TestService } from './service/test.service';
+import { InteractionsController } from './controller/interactions.controller';
+import { InteractionsService } from './service/interactions.service';
 
 @Module({
   imports: [],
@@ -22,6 +24,7 @@ import { TestService } from './service/test.service';
     CustomerVehicleController,
     ServiceAppointmentController,
     TestController,
+    InteractionsController,
   ],
   providers: [
     VehicleServiceService,
@@ -33,6 +36,7 @@ import { TestService } from './service/test.service';
     ServiceAppointmentService,
     ServiceAppointmentRepository,
     TestService,
+    InteractionsService,
   ],
   exports: [],
 })
