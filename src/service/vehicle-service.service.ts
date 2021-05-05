@@ -20,7 +20,7 @@ export class VehicleServiceService {
     return this.vehicleServiceRepository.findAll(vehicleServiceEntity);
   }
 
-  public async find(
+  public async findOne(
     vehicleServiceEntity: VehicleServiceEntity,
   ): Promise<VehicleServiceEntity> {
     return this.vehicleServiceRepository.findOne(vehicleServiceEntity);
