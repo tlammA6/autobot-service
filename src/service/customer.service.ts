@@ -23,7 +23,8 @@ export class CustomerService {
   }
 
   async update(customerEntity: CustomerEntity): Promise<CustomerEntity> {
-    return await this.customerRepository.update(customerEntity);
+    await this.customerRepository.update(customerEntity);
+    return this.findOne(customerEntity);
   }
 
   async delete(customerEntity: CustomerEntity): Promise<void> {

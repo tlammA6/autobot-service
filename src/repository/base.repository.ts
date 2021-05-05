@@ -11,65 +11,56 @@ export abstract class BaseRepository<Type> {
       ` VALUES( ${this.tableColumnValues(entity).join(',')})` +
       ` RETURNING ${this.primaryKey(entity)}`;
 
-    console.log(`query: ${query}`);
-    const entities: Type[] = await this.queryWithResults(query);
-
-    return await this.findOne(entities[0]);
+    return await this.findOne((await this.queryWithResults(query))[0]);
   }
 
   async findAll(entity: Type): Promise<Type[]> {
     const query = `SELECT * FROM ${this.tableName(entity)}`;
+
     return await this.queryWithResults(query);
   }
 
-  async findOne(entity: Type): Promise<Type> | undefined {
-    const query = `SELECT * FROM ${this.tableName(
-      entity,
-    )} ${this.buildWhereClause(entity)}`;
-    const entities: Type[] = await this.queryWithResults(query);
+  async findOne(entity: Type): Promise<Type> {
+    this.mustHavePrimaryKeyValue(entity);
 
-    return entities && entities.length > 0 ? entities[0] : undefined;
+    const query =
+      `SELECT * FROM ` +
+      ` ${this.tableName(entity)} ` +
+      ` ${this.buildWhereClause(entity)}`;
+
+    return (await this.queryWithResults(query))[0];
   }
 
-  async update(entity: Type): Promise<Type> {
-    if (!this.primaryKeyValue(entity)) {
-      throw new Error(
-        `${entity.constructor.name} missing ${this.primaryKey(entity)}`,
-      );
-    }
-    let setClause = '';
+  async update(entity: Type): Promise<void> {
+    this.mustHavePrimaryKeyValue(entity);
+
+    const setValues: string[] = [];
 
     for (const [key, value] of Object.entries(entity)) {
-      const column = this.inferColumnName(key);
-
-      if (column != this.primaryKey(entity)) {
-        if (setClause.length != 0) {
-          setClause = setClause + ', ';
-        }
-
-        setClause = setClause + `${column} = ${this.inferValueType(value)}`;
+      if (this.inferColumnName(key) != this.primaryKey(entity)) {
+        setValues.push(
+          `${this.inferColumnName(key)} = ${this.inferValueType(value)}`,
+        );
       }
     }
 
-    const query = `UPDATE ${this.tableName(entity)} 
-        SET ${setClause} ${this.buildWhereClause(entity)}`;
-    console.log(`Update query: ${query}`);
-    await this.queryNoReturn(query);
+    const query =
+      `UPDATE ${this.tableName(entity)}  ` +
+      ` SET ${setValues.join(', ')} ` +
+      ` ${this.buildWhereClause} `;
 
-    return entity;
+    await this.queryNoReturn(query);
   }
 
   async delete(entity: Type): Promise<void> {
-    if (!this.primaryKeyValue(entity)) {
-      throw new Error(
-        `${entity.constructor.name} is missing primary key value`,
-      );
-    }
-    const query = `DELETE FROM ${this.tableName(
-      entity,
-    )} ${this.buildWhereClause(entity)}`;
-    console.log(`Delete Query: ${query}`);
-    await await this.queryNoReturn(query);
+    this.mustHavePrimaryKeyValue(entity);
+
+    const query =
+      `DELETE FROM ` +
+      ` ${this.tableName(entity)} ` +
+      ` ${this.buildWhereClause(entity)}`;
+
+    await this.queryNoReturn(query);
   }
 
   private async createClient(): Promise<Client> {
@@ -79,6 +70,7 @@ export abstract class BaseRepository<Type> {
   }
 
   private async queryNoReturn(query: string): Promise<void> {
+    console.log(`Query: ${query}`);
     const client: Client = await this.createClient();
     await client
       .query(query)
@@ -88,22 +80,23 @@ export abstract class BaseRepository<Type> {
   }
 
   private async queryWithResults(query: string): Promise<Type[]> {
+    console.log(`Query: ${query}`);
+
     const client: Client = await this.createClient();
     const entities: Type[] = [];
-    try {
-      const result = await client.query(query);
-      const rows = result.rows;
-      rows.forEach((row) => {
-        entities.push(
-          this.populateEntity(this.createEntity(), result.fields, row),
-        );
-      });
-    } catch (err) {
-      console.error(err.stack);
-    } finally {
-      client.end();
-    }
-    console.log('entitycount: ' + entities.length);
+    await client
+      .query(query)
+      .then((result) => {
+        const rows = result.rows;
+        rows.forEach((row) => {
+          entities.push(
+            this.populateEntity(this.createEntity(), result.fields, row),
+          );
+        });
+      })
+      .catch((e) => console.error(e.stack))
+      .then(() => client.end());
+
     return entities;
   }
 
@@ -132,6 +125,14 @@ export abstract class BaseRepository<Type> {
 
   private primaryKey(entity: Type): string {
     return this.tableName(entity) + '_ID';
+  }
+
+  private mustHavePrimaryKeyValue(entity: Type): void {
+    if (!this.primaryKeyValue(entity)) {
+      throw new Error(
+        `${entity.constructor.name} missing ${this.primaryKey(entity)}`,
+      );
+    }
   }
 
   private primaryKeyValue(entity: Type): any {

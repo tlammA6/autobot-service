@@ -29,7 +29,8 @@ export class VehicleServiceService {
   async update(
     vehicleServiceEntity: VehicleServiceEntity,
   ): Promise<VehicleServiceEntity> {
-    return await this.vehicleServiceRepository.update(vehicleServiceEntity);
+    await this.vehicleServiceRepository.update(vehicleServiceEntity);
+    return this.findOne(vehicleServiceEntity);
   }
 
   async delete(vehicleServiceEntity: VehicleServiceEntity): Promise<void> {
