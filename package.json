@@ -24,6 +24,7 @@
     "@nestjs/common": "^7.6.15",
     "@nestjs/core": "^7.6.15",
     "@nestjs/platform-express": "^7.6.15",
+    "aws-amplify": "^3.3.27",
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
     "pg": "^8.6.0",

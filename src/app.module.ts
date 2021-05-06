@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import Amplify, {Interactions } from 'aws-amplify';
 import { VehicleServiceController } from './controller/vehicle-service.controller';
 import { VehicleServiceService } from './service/vehicle-service.service';
 import { VehicleServiceRepository } from './repository/vehicle-service.repository';
@@ -13,8 +14,29 @@ import { ServiceAppointmentService } from './service/service-appointment.service
 import { ServiceAppointmentRepository } from './repository/service-appointment.repository';
 import { TestController } from './controller/test.controller';
 import { TestService } from './service/test.service';
-import { InteractionsController } from './controller/interactions.controller';
-import { InteractionsService } from './service/interactions.service';
+import { UtteranceController } from './controller/utterance.controller';
+import { UtteranceService } from './service/utterance.service';
+
+Amplify.configure({
+  Auth: {
+    identityPoolId: 'us-east-1:faf5edda-9150-4549-a846-e4a5ea7b5278',
+    region: 'us-east-1'
+  },
+  Interactions: {
+    bots: {
+      "ScheduleAppointment_dev": {
+        "name": "ScheduleAppointment_dev",
+        "alias": "$LATEST",
+        "region": "us-east-1",
+      },
+      "autobot": {
+        "name": "autobot",
+        "alias": "$LATEST",
+        "region": "us-east-1",
+      },
+    }
+  }
+});
 
 @Module({
   imports: [],
@@ -24,7 +46,7 @@ import { InteractionsService } from './service/interactions.service';
     CustomerVehicleController,
     ServiceAppointmentController,
     TestController,
-    InteractionsController,
+    UtteranceController,
   ],
   providers: [
     VehicleServiceService,
@@ -36,7 +58,7 @@ import { InteractionsService } from './service/interactions.service';
     ServiceAppointmentService,
     ServiceAppointmentRepository,
     TestService,
-    InteractionsService,
+    UtteranceService,
   ],
   exports: [],
 })
